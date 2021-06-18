@@ -1,6 +1,6 @@
 {
     "name": "esbuild-plugin-wasm-pack",
-    "version": "1.0.0",
+    "version": "1.0.1",
     "description": "An esbuild plugin that runs wasm-pack.",
     "keywords": [
         "wasm",
