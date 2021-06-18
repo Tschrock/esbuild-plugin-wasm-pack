@@ -1,9 +1,10 @@
 {
     "name": "esbuild-plugin-wasm-pack",
     "version": "1.0.0",
-    "description": "A WASM file loader for esbuild.",
+    "description": "An esbuild plugin that runs wasm-pack.",
     "keywords": [
         "wasm",
+        "wasm-pack",
         "webassembly",
         "esbuild",
         "plugin",
