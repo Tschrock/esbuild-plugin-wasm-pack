@@ -1,6 +1,6 @@
 import { Plugin, PluginBuild, OnStartResult } from 'esbuild';
 
-import { BOLD, FG_BLUE, FG_RED, RESET } from './console';
+import { BOLD, FG_BLUE, FG_RED, I_INFO, I_SUCCESS, I_WARN, RESET } from './console';
 import { WasmPackOptions } from './options';
 import { CancelableProcess } from './process';
 
@@ -57,7 +57,7 @@ class WasmPackPlugin implements Plugin {
      * Runs `wasm-pack` with the configured options.
      */
     private async wasmPack(): Promise<OnStartResult> {
-        this.info(`\nℹ️  Compiling your crate in ${this.options.profile ?? '<default>'} mode...\n`);
+        this.info(`Compiling your crate in ${this.options.profile ?? '<default>'} mode...`);
 
         // Resolve the wasm-pack executable path
         const wasmPackPath = process.env['WASM_PACK_PATH'] || this.options.wasmPackPath || 'wasm-pack';
@@ -91,41 +91,45 @@ class WasmPackPlugin implements Plugin {
         // Return the results
         if (result.error) {
             if (result.canceled) {
-                this.error(`\n⚠️  Error canceling wasm-pack: ${result.error.message}\n`);
+                this.error(`Error canceling wasm-pack: ${result.error.message}.`);
                 return { errors: [{ text: result.error.message, detail: result.error.stack }] };
             }
             else {
-                this.error(`\n⚠️  Error running wasm-pack: ${result.error.message}\n`);
+                this.error(`Error running wasm-pack: ${result.error.message}.`);
                 return { errors: [{ text: result.error.message, detail: result.error.stack }] };
             }
         }
 
         if (result.canceled) {
-            this.error('\n⚠️  Build was canceled\n');
+            this.error('Build was canceled.');
             return { warnings: [{ text: 'Build was canceled' }] };
         }
 
         if (result.signal) {
-            this.error(`\n⚠️  Error running wasm-pack: process was killed with signal '${result.signal}'.\n`);
+            this.error(`Error running wasm-pack: process was killed with signal '${result.signal}'.`);
             return { errors: [{ text: `Error running wasm-pack: process was killed with signal '${result.signal}'.` }] };
         }
 
         if (result.code) {
-            this.error('\n⚠️  Rust compilation failed.\n');
+            this.error('Rust compilation failed.');
             return { errors: [{ text: 'Rust compilation failed.' }] };
         }
 
         // Success
-        this.info('\n✅  Your crate was successfully compiled\n');
+        this.success('Your crate was successfully compiled.');
         return {};
     }
 
+    private success(msg: string) {
+        if (this.logLevelInt <= 1) console.log(`\n${I_SUCCESS}${BOLD}${FG_BLUE}${msg}${RESET}\n`);
+    }
+
     private info(msg: string) {
-        if (this.logLevelInt <= 1) console.log(`${BOLD}${FG_BLUE}${msg}${RESET}`);
+        if (this.logLevelInt <= 1) console.log(`\n${I_INFO}${BOLD}${FG_BLUE}${msg}${RESET}\n`);
     }
 
     private error(msg: string) {
-        if (this.logLevelInt <= 3) console.log(`${BOLD}${FG_RED}${msg}${RESET}`);
+        if (this.logLevelInt <= 3) console.log(`\n${I_WARN}${BOLD}${FG_RED}${msg}${RESET}\n`);
     }
 }
 
