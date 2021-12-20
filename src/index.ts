@@ -1,8 +1,8 @@
-import { Plugin, PluginBuild, OnStartResult } from 'esbuild';
+import { Plugin, PluginBuild, OnStartResult, OnResolveResult } from 'esbuild';
 
 import { BOLD, FG_BLUE, FG_RED, I_INFO, I_SUCCESS, I_WARN, RESET } from './console';
 import { WasmPackOptions } from './options';
-import { CancelableProcess } from './process';
+import { WasmPackProcess } from './process';
 
 export { WasmPackOptions };
 
@@ -28,7 +28,12 @@ class WasmPackPlugin implements Plugin {
     /**
      * The wasm-pack process, if it's running.
      */
-    private wasmProcess: CancelableProcess | null = null;
+    private wasmProcess: WasmPackProcess | null = null;
+
+    /**
+     * The files to watch.
+     */
+    private watchFiles: string[] = [];
 
     /**
      * Creates a new WasmPackPlugin.
@@ -47,9 +52,9 @@ class WasmPackPlugin implements Plugin {
         build.onStart(() => this.wasmPack());
 
         // Force all resolutions to wait until the build is done
-        build.onResolve({ filter: /.*/ }, async (): Promise<undefined> => {
+        build.onResolve({ filter: /.*/ }, async (): Promise<OnResolveResult> => {
             await this.wasmProcess?.waitForClose();
-            return undefined;
+            return { watchFiles: this.watchFiles };
         });
     }
 
@@ -59,34 +64,22 @@ class WasmPackPlugin implements Plugin {
     private async wasmPack(): Promise<OnStartResult> {
         this.info(`Compiling your crate in ${this.options.profile ?? '<default>'} mode...`);
 
-        // Resolve the wasm-pack executable path
-        const wasmPackPath = process.env['WASM_PACK_PATH'] || this.options.wasmPackPath || 'wasm-pack';
-
-        // Build the argument list
-        const argsList: string[] = ['build'];
-        if (this.options.logLevel) argsList.push('--log-level', this.options.logLevel);
-        if (this.options.profile) argsList.push('--' + this.options.profile);
-        if (this.options.noTypescript) argsList.push('--no-typescript');
-        if (this.options.mode) argsList.push('--mode', this.options.mode);
-        if (this.options.outDir) argsList.push('--out-dir', this.options.outDir);
-        if (this.options.outName) argsList.push('--out-name', this.options.outName);
-        if (this.options.scope) argsList.push('--scope', this.options.scope);
-        if (this.options.target) argsList.push('--target', this.options.target);
-        if (this.options.extraPackOptions) argsList.push(...this.options.extraPackOptions);
-        if (this.options.path) argsList.push(this.options.path);
-        if (this.options.extraOptions) argsList.push('--', ...this.options.extraOptions);
-
         // Cancel any existing wasm-pack process
         if (this.wasmProcess) await this.wasmProcess.cancel();
 
         // Spawn wasm-pack
-        this.wasmProcess = CancelableProcess.spawn(wasmPackPath, argsList, { stdio: 'inherit' });
+        this.wasmProcess = new WasmPackProcess(this.options);
 
         // Wait for it to exit
         const result = await this.wasmProcess.waitForClose();
 
         // Clear the current process
         this.wasmProcess = null;
+
+        // Save the watch files
+        if(result.watchFiles.length) {
+            this.watchFiles = result.watchFiles;
+        }
 
         // Return the results
         if (result.error) {

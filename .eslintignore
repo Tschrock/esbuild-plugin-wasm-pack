@@ -1,4 +1,5 @@
 /*
 !/src/
 !/test/
+/test/pack-test/pkg/
 !/*.ts

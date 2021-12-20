@@ -22,7 +22,7 @@ clean.description = 'Cleans the build directories';
  */
 export async function bundle(): Promise<void> {
     await esbuild.build({
-        entryPoints: ['./src/index.js'],
+        entryPoints: ['./src/index.ts'],
         bundle: true,
         minify: true,
         outfile: './dist/index.js',

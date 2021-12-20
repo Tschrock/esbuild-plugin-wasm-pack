@@ -7,5 +7,5 @@ extern "C" {
 
 #[wasm_bindgen(start)]
 pub fn main() {
-    alert("Hello World!");
+    alert(include_str!("./test with spaces.txt"));
 }
