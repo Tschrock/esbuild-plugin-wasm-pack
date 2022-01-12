@@ -5,7 +5,7 @@ An [esbuild](https://esbuild.github.io/) plugin that runs [wasm-pack]() before e
 
 
 ## Requirements
-- node >=0.10.0
+- node >=0.12.0
 - esbuild >= 0.11.15
 - rust/cargo
 - wasm-pack
