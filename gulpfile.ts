@@ -28,7 +28,7 @@ export async function bundle(): Promise<void> {
         outfile: './dist/index.js',
         format: 'cjs',
         platform: 'node',
-        target: 'node10'
+        target: 'node12'
     });
 }
 clean.description = 'Bundles the plugin';
